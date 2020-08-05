@@ -1,0 +1,17 @@
+TODO:
+Combine all peeces together:
+
+create grid over whole Austria
+  - tiles 512x512 and 256x256 (->260x260)
+  
+prepare all raster data
+  - get orthophoto extend
+  
+  - dsm (oh) clip by extend
+  - align pixels
+  
+  - dtm merge tiles into one piece
+  - clip by extend
+  - align pixels
+  
+  - create ground truth
