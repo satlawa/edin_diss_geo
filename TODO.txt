@@ -15,3 +15,9 @@ prepare all raster data
   - align pixels
   
   - create ground truth
+
+clip raster with grid tiles
+
+save as py torch dataset
+
+train model
