@@ -16,22 +16,22 @@ import math
 
 class DataDTM(object):
 
-    def __init__(self, path_dtm, shape):
+    def __init__(self, input_dir, output_dir, shape):
 
         # check if path to the dtm tiles is valid
-        if not os.path.exists(path_dtm):
+        if not os.path.exists(input_dir):
             print("provided path does not exist!")
 
         else:
             print("provided path found")
             # check if path contains / at the end
-            if path_dtm[-1] == '/':
-                self.path_dtm = path_dtm
+            if input_dir[-1] == '/':
+                self.input_dir = input_dir
             else:
-                self.path_dtm = path_dtm + '/'
+                self.input_dir = input_dir + '/'
 
             # check if dtm_info.csv extists (contains info about tiles)
-            if not os.path.exists(self.path_dtm + 'dtm_info.csv'):
+            if not os.path.exists(self.input_dir + 'dtm_info.csv'):
                 print("file 'dtm_info.csv' not found")
                 print("creating file 'dtm_info.csv' ...")
                 # create dtm_info.csv
@@ -42,6 +42,8 @@ class DataDTM(object):
 
             self.shape = shape
             print("dtm initialised")
+
+        self.output_dir = output_dir
 
 
     def get_extend(self, file_path):
@@ -64,7 +66,7 @@ class DataDTM(object):
         from the raster tiles
         '''
         # set directory from path string
-        directory = os.fsencode(self.path_dtm)
+        directory = os.fsencode(self.input_dir)
 
         # create llist for storing the extend of every tile
         tiles_extend = []
@@ -76,7 +78,7 @@ class DataDTM(object):
             # if the filename contains .tif -> it is a raster file
             if filename.endswith(".tif"):
                 # get extend (upper left and lower right coodrdinates)
-                ulx,uly,lrx,lry = self.get_extend(self.path_dtm + filename)
+                ulx,uly,lrx,lry = self.get_extend(self.input_dir + filename)
                 # get tile number out of filename
                 pos = filename.replace('.tif','').split('-')
                 # append to list
@@ -89,7 +91,7 @@ class DataDTM(object):
         # sort dataframe on filename
         df = df.sort_values('filename')
         # save as csv
-        df.to_csv(self.path_dtm + 'dtm_info.csv')
+        df.to_csv(self.input_dir + 'dtm_info.csv')
 
 
     def read_index(self):
@@ -101,44 +103,54 @@ class DataDTM(object):
         about all raster tiles
         '''
         # read csv into dataframe
-        df = pd.read_csv(self.path_dtm + 'dtm_info.csv', index_col=False)
+        df = pd.read_csv(self.input_dir + 'dtm_info.csv', index_col=False)
         # return index (dataframe with all the information)
         return df[['filename', 'y', 'x','ulx','uly','lrx','lry']]
 
 
-    def filter_tiles(self):
-
+    def create_dtm(self):
+        # get extend
         t_ulx, t_uly, t_lrx, t_lry = self.shape
-
+        # filter relevant tiles for extend
         idx_fil = self.index[(t_ulx <= self.index['lrx']) & (t_lrx >= self.index['ulx']) & (t_uly >= self.index['uly']) & (t_lry <= self.index['lry'])]
+        # get relevant colum numbers
         idx_fil_y = idx_fil['y'].unique()
 
+        column_list = []
+
         for y in idx_fil_y:
+            # filter column
+            index_y = self.index[self.index['y'] == y]
+            # fliter relevant row tiles
+            index_y_x = index_y[(t_lry <= index_y['uly']) & (t_uly >= index_y['lry'])]
+            # set pathout as the output path of the merged tiles
+            pathout = self.output_dir + 'col_' + str(y) + '.tif'
+            # merge tilse in column
+            self.create_column(index_y_x['filename'].to_list(), pathout)
 
+            column_list.append(pathout)
 
-pos = 108
-x1 = x[x['y'] == pos]
-x1
-
-x2 = x1[(t_lry <= x1['uly']) & (t_uly >= x1['lry'])]
-x2
-
-    def create_dtm(self):
-
-        path1 = self.path_dtm + x2.iloc[0,0]
-
-        for i in range(1, x2.shape[0]):
-            #print(hd_path + df_0.iloc[i,0])
-
-            path2 = hd_path + x2.iloc[i,0]
-            print(path1, path2)
-
-            pathout = '/media/philipp/5e9929a4-cb93-48b8-8648-6c83a93e83ed/gis/dtm_/mosaic_' + str(pos) + '.tif'
-            mosaic(path1, path2, pathout)
-
-            path1 = '/media/philipp/5e9929a4-cb93-48b8-8648-6c83a93e83ed/gis/dtm_/mosaic_' + str(pos) + '.tif'
+        # set pathout as the output path of the merged tiles
+        pathout = self.output_dir + 'dtm_final.tif'
+        # merge tilse in column
+        self.create_column(column_list, pathout)
 
         print('end')
+
+
+    def create_column(self, index_y_x, pathout):
+        # set path1 as the path to the first tile
+        path1 = self.input_dir + index_y_x[0]
+
+        for i in range(1, len(index_y_x)):
+            # set path2 as the path to the next tile
+            path2 = hd_path + index_y_x[i]
+            # merge two tiles
+            self.mosaic(path1, path2, pathout)
+            # set path1 to the output path
+            path1 = pathout
+
+        print('tile column |' + str(pos) + '| finished')
 
 
     def mosaic(self, path1, path2, pathout):
