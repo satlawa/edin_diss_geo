@@ -118,36 +118,41 @@ class DataDTM(object):
         # get relevant colum numbers
         idx_fil_y = idx_fil['y'].unique()
 
-        column_list = []
-
-        # paralell processing
-        #pool = mp.Pool(processes=mp.cpu_count())
+        paths_paralell = []
+        paths_out = []
 
         for y in idx_fil_y:
             # filter column
             index_y = self.index[self.index['y'] == y]
             # fliter relevant row tiles
             index_y_x = index_y[(t_lry <= index_y['uly']) & (t_uly >= index_y['lry'])]
-            # set pathout as the output path of the merged tiles
-            pathout = self.output_dir + 'col_' + str(y) + '.tif'
+            # set path_out as the output path of the merged tiles
+            path_out = self.output_dir + 'col_' + str(y) + '.tif'
             # create list with paths to DTMs
             paths = [self.input_dir + filename for filename in index_y_x['filename'].to_list()]
             # merge tilse in column
-            self.create_column(paths, pathout)
-
-            column_list.append(pathout)
+            #self.create_column(paths, path_out)
+            paths_paralell.append([paths, path_out])
+            paths_out.append(path_out)
 
             print('tile column |' + str(y) + '| finished')
 
-        # set pathout as the output path of the merged tiles
-        pathout = self.output_dir + 'dtm_final.tif'
-        # merge tilse in column
-        self.create_column(column_list, pathout)
+        ###   paralell processing   ###
+        # set number of processes to cpu cores (threads)
+        pool = mp.Pool(processes=mp.cpu_count())
+        # merge tiles in columns - distributed over all cores
+        pool.map(self.create_column, paths_paralell)
+
+        # set path_out as the output path of the merged tiles
+        path_out = self.output_dir + 'dtm_final.tif'
+        # merge column tiles into one file
+        self.create_column([paths_out, path_out])
 
         print('end')
 
 
-    def create_column(self, index_y_x, pathout):
+    def create_column(self, paths):
+        index_y_x, path_out = paths
         # set path1 as the path to the first tile
         path1 = index_y_x[0]
 
@@ -155,12 +160,12 @@ class DataDTM(object):
             # set path2 as the path to the next tile
             path2 = index_y_x[i]
             # merge two tiles
-            self.mosaic(path1, path2, pathout)
+            self.mosaic(path1, path2, path_out)
             # set path1 to the output path
-            path1 = pathout
+            path1 = path_out
 
 
-    def mosaic(self, path1, path2, pathout):
+    def mosaic(self, path1, path2, path_out):
         '''
         merge two raster tiles together into one raster tile
         '''
@@ -217,7 +222,7 @@ class DataDTM(object):
 
         # create the output image
         driver = ds1.GetDriver()
-        dsOut = driver.Create(pathout, cols, rows, 1, band1.DataType)
+        dsOut = driver.Create(path_out, cols, rows, 1, band1.DataType)
         bandOut = dsOut.GetRasterBand(1)
 
         # read in doq1 and write it to the output
