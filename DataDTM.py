@@ -14,6 +14,8 @@ from gdalconst import *
 import numpy as np
 import math
 
+import multiprocessing as mp
+
 class DataDTM(object):
 
     def __init__(self, input_dir, output_dir, shape):
@@ -118,6 +120,9 @@ class DataDTM(object):
 
         column_list = []
 
+        # paralell processing
+        #pool = mp.Pool(processes=mp.cpu_count())
+
         for y in idx_fil_y:
             # filter column
             index_y = self.index[self.index['y'] == y]
@@ -125,10 +130,14 @@ class DataDTM(object):
             index_y_x = index_y[(t_lry <= index_y['uly']) & (t_uly >= index_y['lry'])]
             # set pathout as the output path of the merged tiles
             pathout = self.output_dir + 'col_' + str(y) + '.tif'
+            # create list with paths to DTMs
+            paths = [self.input_dir + filename for filename in index_y_x['filename'].to_list()]
             # merge tilse in column
-            self.create_column(index_y_x['filename'].to_list(), pathout)
+            self.create_column(paths, pathout)
 
             column_list.append(pathout)
+
+            print('tile column |' + str(y) + '| finished')
 
         # set pathout as the output path of the merged tiles
         pathout = self.output_dir + 'dtm_final.tif'
@@ -140,17 +149,15 @@ class DataDTM(object):
 
     def create_column(self, index_y_x, pathout):
         # set path1 as the path to the first tile
-        path1 = self.input_dir + index_y_x[0]
+        path1 = index_y_x[0]
 
         for i in range(1, len(index_y_x)):
             # set path2 as the path to the next tile
-            path2 = hd_path + index_y_x[i]
+            path2 = index_y_x[i]
             # merge two tiles
             self.mosaic(path1, path2, pathout)
             # set path1 to the output path
             path1 = pathout
-
-        print('tile column |' + str(pos) + '| finished')
 
 
     def mosaic(self, path1, path2, pathout):
