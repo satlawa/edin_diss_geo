@@ -3,6 +3,8 @@ create one raster DTM (.tif) out of many tiles
 
 todo:
 * check if coordinate system is the same
+
+* write algorithm to merge pairs together 
 '''
 
 from osgeo import gdal
@@ -163,6 +165,8 @@ class DataDTM(object):
             self.mosaic(path1, path2, path_out)
             # set path1 to the output path
             path1 = path_out
+
+        print('tile column |' + str(y) + '| finished')
 
 
     def mosaic(self, path1, path2, path_out):
