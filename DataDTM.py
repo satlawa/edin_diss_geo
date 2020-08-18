@@ -139,7 +139,7 @@ class DataDTM(object):
 
         ###   paralell processing   ###
         # set number of processes to cpu cores (threads)
-        pool = mp.Pool(processes=mp.cpu_count())
+        pool = mp.Pool(processes=int(mp.cpu_count()/2))
         # merge tiles in columns - distributed over all cores
         pool.map(self.create_column, paths_paralell)
 
