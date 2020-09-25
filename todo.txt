@@ -1,0 +1,4 @@
+TODO
+make Dataset
+cut into 512x512
+create ground truth
