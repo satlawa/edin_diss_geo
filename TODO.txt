@@ -1,6 +1,10 @@
 TODO:
 Combine all peeces together:
 
+get missing data
+ - SAP information about cutted wood
+  - GIS information about forest stands (Waldorte polygone)
+
 create grid over whole Austria
   - tiles 512x512 and 256x256 (->260x260)
   
