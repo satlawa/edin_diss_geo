@@ -2,3 +2,7 @@ TODO
 make Dataset
 cut into 512x512
 create ground truth
+make hdf5 file
+
+adopt UNet architecture
+train network
