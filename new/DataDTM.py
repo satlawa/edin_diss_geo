@@ -20,7 +20,7 @@ import multiprocessing as mp
 
 class DataDTM(object):
 
-    def __init__(self, input_dir, output_dir, extend):
+    def __init__(self, input_dir, output_dir):
 
         # check if path to the dtm tiles is valid
         if not os.path.exists(input_dir):
@@ -43,14 +43,14 @@ class DataDTM(object):
             # set index (dataframe with all the information)
             print("reading file 'dtm_info.csv' ...")
             self.index = self.read_index()
-
-            self.extend = extend
+            
+            self.extend = 0,0,0,0
             print("dtm initialised")
 
         self.output_dir = output_dir
 
 
-    def get_extend(self, file_path):
+    def set_extend_by_raster(self, file_path):
         '''
         get extend of raster
         '''
@@ -58,6 +58,30 @@ class DataDTM(object):
         ulx, xres, xskew, uly, yskew, yres  = src.GetGeoTransform()
         lrx = ulx + (src.RasterXSize * xres)
         lry = uly + (src.RasterYSize * yres)
+        
+        self.extend = ulx,uly,lrx,lry
+        
+        
+    def set_extend_by_coordinates(self, ulx,uly,lrx,lr):
+        self.extend = ulx,uly,lrx,lry
+        
+        
+    def get_extend(self):
+        '''
+        get extend of raster
+        '''
+        return(self.extend)
+    
+        
+    def extract_extend(self, file_path):
+        '''
+        extract extend out of raster
+        '''
+        src = gdal.Open(file_path)
+        ulx, xres, xskew, uly, yskew, yres  = src.GetGeoTransform()
+        lrx = ulx + (src.RasterXSize * xres)
+        lry = uly + (src.RasterYSize * yres)
+        
         return(ulx,uly,lrx,lry)
 
 
@@ -82,7 +106,7 @@ class DataDTM(object):
             # if the filename contains .tif -> it is a raster file
             if filename.endswith(".tif"):
                 # get extend (upper left and lower right coodrdinates)
-                ulx,uly,lrx,lry = self.get_extend(self.input_dir + filename)
+                ulx,uly,lrx,lry = self.extract_extend(self.input_dir + filename)
                 # get tile number out of filename
                 pos = filename.replace('.tif','').split('-')
                 # append to list
@@ -116,7 +140,10 @@ class DataDTM(object):
         # get extend
         t_ulx, t_uly, t_lrx, t_lry = self.extend
         # filter relevant tiles for extend
-        idx_fil = self.index[(t_ulx <= self.index['lrx']) & (t_lrx >= self.index['ulx']) & (t_uly >= self.index['uly']) & (t_lry <= self.index['lry'])]
+        idx_fil = self.index[(t_ulx <= self.index['lrx']) & 
+                             (t_lrx >= self.index['ulx']) & 
+                             (t_uly >= self.index['uly']) & 
+                             (t_lry <= self.index['lry'])]
         # get relevant colum numbers
         idx_fil_y = idx_fil['y'].unique()
 
@@ -137,7 +164,7 @@ class DataDTM(object):
             paths_paralell.append([paths, path_out])
             paths_out.append(path_out)
 
-            print('tile column |' + str(y) + '| finished')
+            print('tile column |' + str(y) + '| added')
 
         ###   paralell processing   ###
         # set number of processes to cpu cores (threads)
@@ -166,7 +193,7 @@ class DataDTM(object):
             # set path1 to the output path
             path1 = path_out
 
-        print('tile column |' + str(y) + '| finished')
+        print('tile column |' + path_out + '| finished')
 
 
     def mosaic(self, path1, path2, path_out):
