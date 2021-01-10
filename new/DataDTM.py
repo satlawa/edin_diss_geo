@@ -14,7 +14,7 @@ import numpy as np
 
 class DataDTM(object):
 
-    def __init__(self, input_dir, output_file):
+    def __init__(self, input_dir):
 
         # check if path to the dtm tiles is valid
         if not os.path.exists(input_dir):
@@ -41,7 +41,7 @@ class DataDTM(object):
             self.extend = 0,0,0,0
             print("dtm initialised")
 
-        self.output_file = output_file
+            self.dtm_path = None
 
 
     def set_extend_by_raster(self, file_path):
@@ -130,7 +130,7 @@ class DataDTM(object):
         return df[['filename', 'y', 'x','ulx','uly','lrx','lry']]
 
 
-    def create_dtm(self):
+    def create_dtm(self, output_file):
         # get extend
         t_ulx, t_uly, t_lrx, t_lry = self.extend
         # filter relevant tiles for extend
@@ -147,9 +147,22 @@ class DataDTM(object):
                 f.write(os.path.join(self.input_dir, name) + '\n')
 
         # create string containing bash command
-        cmd = "gdal_merge.py -ot Float32 -of GTiff -o {} --optfile {}".format(self.output_file, merge_list_path)
+        cmd = "gdal_merge.py -ot Float32 -of GTiff -o {} --optfile {}".format(output_file, merge_list_path)
 
         # execute bash command
         os.system(cmd)
 
-        print("Tif files merged")
+        print("DTM file created - files merged")
+        self.dtm_path = output_file
+
+
+    def create_slope(self, output_file):
+
+        if self.dtm_path is not None:
+            # create string containing bash command
+            cmd = "gdaldem slope {} {} -of GTiff".format(self.dtm_path, output_file)
+
+            # execute bash command
+            os.system(cmd)
+
+            print("Slope file created")
