@@ -80,10 +80,12 @@ class DataTiles(object):
             print("please use one of these types:")
             print("   'ortho' | 'dsm' | 'dtm' | 'slope'")
 
-            if not os.path.exists(os.path.join(path_out_dir, typ)):
-                os.mkdir(os.path.join(path_out_dir, typ))
-
         else:
+            # check ang create folder if needed
+            if not os.path.exists(os.path.join(self.path_out_dir, typ)):
+                print('creating folder')
+                os.mkdir(os.path.join(self.path_out_dir, typ))
+
             print("=========================================")
             print("starting creation of tiles")
             # get indices
