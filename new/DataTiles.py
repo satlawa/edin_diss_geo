@@ -96,7 +96,7 @@ class DataTiles(object):
             for i, index in enumerate(ids):
                 if i % (ids.shape[0] // 10) == 0:
                     os.system( 'cls' )
-                    print("Progress: {}%".format(i))
+                    print("Progress: {}%".format(percent))
                     percent += 10
                 # get extend
                 extend = self.grid_cut.loc[index,'geometry'].bounds
