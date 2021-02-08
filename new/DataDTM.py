@@ -134,10 +134,8 @@ class DataDTM(object):
         # get extend
         t_ulx, t_uly, t_lrx, t_lry = self.extend
         # filter relevant tiles for extend
-        idx_fil = self.index[(t_ulx <= self.index['lrx']) &
-                             (t_lrx >= self.index['ulx']) &
-                             (t_uly >= self.index['uly']) &
-                             (t_lry <= self.index['lry'])]
+        idx_fil = self.index[(self.index['ulx'] <= t_lrx) & (self.index['lrx'] >= t_ulx) &
+                   (self.index['lry'] <= t_uly) & (self.index['uly'] >= t_lry)]
 
         # set path to text file with all tif file paths to be merged
         merge_list_path = os.path.join(self.input_dir, 'dtm_merge_list.txt')
