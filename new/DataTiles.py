@@ -73,10 +73,10 @@ class DataTiles(object):
         Return:
             raster_tile
         '''
-        if not os.path.isfile(path_raster):
-            print("provided raster file does not exist!")
+        #if not os.path.isfile(path_raster):
+        #    print("provided raster file does not exist!")
 
-        elif typ not in {'ortho', 'dsm', 'dtm', 'slope'}:
+        if typ not in {'ortho', 'dsm', 'dtm', 'slope'}:
             print("provided type does not exist!")
             print("please use one of these types:")
             print("   'ortho' | 'dsm' | 'dtm' | 'slope'")
