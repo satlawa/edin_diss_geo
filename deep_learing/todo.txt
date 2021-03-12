@@ -1,0 +1,8 @@
+make graphics
+add log, csv
+rewrite as python script
+oo image plot class
+oo dataset class
+add hdf5 metadata
+
+densenet work
